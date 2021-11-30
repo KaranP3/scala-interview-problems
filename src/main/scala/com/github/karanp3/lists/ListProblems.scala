@@ -19,6 +19,9 @@ sealed abstract class RList[+T] {
 
   // the size of the list
   def length: Int
+
+  // reverse the list
+  def reverse: RList[T]
 }
 
 case object RNil extends RList[Nothing] {
@@ -35,6 +38,9 @@ case object RNil extends RList[Nothing] {
 
   // the size of the list
   override def length: Int = 0;
+
+  // reverse the list
+  override def reverse: RList[Nothing] = RNil
 }
 
 case class ::[+T](override val head: T, override val tail: RList[T])
@@ -77,15 +83,44 @@ case class ::[+T](override val head: T, override val tail: RList[T])
 
     lengthTailRec(this, 0)
   }
+
+  override def reverse: RList[T] = {
+    @tailrec
+    def reverseTailRec(remainingList: RList[T], reversedList: RList[T]): RList[T] = {
+      if (remainingList.isEmpty) reversedList
+      else reverseTailRec(remainingList.tail, remainingList.head :: reversedList)
+    }
+
+    reverseTailRec(this, RNil)
+  }
+}
+
+object RList {
+  def from[T](iterable: Iterable[T]): RList[T] = {
+    @tailrec
+    def convertToRListTailRec(remaining: Iterable[T], acc: RList[T]): RList[T] = {
+      if (remaining.isEmpty) acc
+      else convertToRListTailRec(remaining.tail, remaining.head :: acc)
+    }
+
+    convertToRListTailRec(iterable, RNil).reverse
+  }
 }
 
 object ListProblems extends App {
   val aSmallList = 1 :: 2 :: 3 :: RNil
+  val aLargeList = RList.from(1 to 10000)
 
   // test get k-th
   println(aSmallList.apply(0))
   println(aSmallList.apply(1))
+  println(aLargeList.apply(8735))
 
   // test length
   println(aSmallList.length)
+  println(aLargeList.length)
+
+  // test reverse
+  println(aSmallList.reverse)
+  println(aLargeList.reverse)
 }
