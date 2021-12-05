@@ -22,6 +22,9 @@ sealed abstract class RList[+T] {
 
   // reverse the list
   def reverse: RList[T]
+
+  // concatenating another list
+  def ++[S >: T](anotherList: RList[S]): RList[S]
 }
 
 case object RNil extends RList[Nothing] {
@@ -41,6 +44,9 @@ case object RNil extends RList[Nothing] {
 
   // reverse the list
   override def reverse: RList[Nothing] = RNil
+
+  // concatenating another list
+  override def ++[S >: Nothing](anotherList: RList[S]): RList[S] = anotherList
 }
 
 case class ::[+T](override val head: T, override val tail: RList[T])
@@ -93,6 +99,16 @@ case class ::[+T](override val head: T, override val tail: RList[T])
 
     reverseTailRec(this, RNil)
   }
+
+  override def ++[S >: T](anotherList: RList[S]): RList[S] =  {
+   @tailrec
+   def concatTailRec(remaining: RList[S], acc: RList[S]): RList[S] = {
+     if (remaining.isEmpty) acc
+     else concatTailRec(remaining.tail, remaining.head :: acc)
+   }
+
+    concatTailRec(anotherList, this)
+  }
 }
 
 object RList {
@@ -109,6 +125,7 @@ object RList {
 
 object ListProblems extends App {
   val aSmallList = 1 :: 2 :: 3 :: RNil
+  val anotherSmallList = 4 :: 5 :: 6 :: RNil
   val aLargeList = RList.from(1 to 10000)
 
   // test get k-th
@@ -123,4 +140,7 @@ object ListProblems extends App {
   // test reverse
   println(aSmallList.reverse)
   println(aLargeList.reverse)
+
+  // test concat
+  println(aSmallList ++ anotherSmallList)
 }
