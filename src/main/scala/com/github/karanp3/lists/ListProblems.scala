@@ -107,7 +107,7 @@ case class ::[+T](override val head: T, override val tail: RList[T])
      else concatTailRec(remaining.tail, remaining.head :: acc)
    }
 
-    concatTailRec(anotherList, this)
+    concatTailRec(anotherList, this.reverse).reverse
   }
 }
 
