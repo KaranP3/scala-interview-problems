@@ -25,6 +25,9 @@ sealed abstract class RList[+T] {
 
   // concatenating another list
   def ++[S >: T](anotherList: RList[S]): RList[S]
+
+  // remove an element at a given index, return a NEW list
+  def removeAt(index: Int): RList[T]
 }
 
 case object RNil extends RList[Nothing] {
@@ -47,6 +50,9 @@ case object RNil extends RList[Nothing] {
 
   // concatenating another list
   override def ++[S >: Nothing](anotherList: RList[S]): RList[S] = anotherList
+
+  // remove an element at a given index, return a NEW list
+  override def removeAt(index: Int): RList[Nothing] = throw new NoSuchElementException
 }
 
 case class ::[+T](override val head: T, override val tail: RList[T])
@@ -109,6 +115,19 @@ case class ::[+T](override val head: T, override val tail: RList[T])
 
     concatTailRec(anotherList, this.reverse).reverse
   }
+
+  // remove an element at a given index, return a NEW list
+  override def removeAt(index: Int): RList[T] = {
+    @tailrec
+    def removeAtTailRec(remaining: RList[T], currentIndex: Int, acc: RList[T]): RList[T] = {
+      if (currentIndex == index) acc.reverse ++ remaining.tail
+      else if (remaining.isEmpty) acc.reverse
+      else removeAtTailRec(remaining.tail, currentIndex + 1, remaining.head :: acc)
+    }
+
+    if (index < 0) this
+    else removeAtTailRec(this, 0, RNil)
+  }
 }
 
 object RList {
@@ -143,4 +162,8 @@ object ListProblems extends App {
 
   // test concat
   println(aSmallList ++ anotherSmallList)
+
+  // test removeAt
+  println(aSmallList.removeAt(2))
+  println(aLargeList.removeAt(13))
 }
