@@ -28,6 +28,11 @@ sealed abstract class RList[+T] {
 
   // remove an element at a given index, return a NEW list
   def removeAt(index: Int): RList[T]
+
+  // the big 3
+  def map[S](f: T => S): RList[S]
+  def flatMap[S](f: T => RList[S]): RList[S]
+  def filter(f: T => Boolean): RList[T]
 }
 
 case object RNil extends RList[Nothing] {
@@ -53,6 +58,13 @@ case object RNil extends RList[Nothing] {
 
   // remove an element at a given index, return a NEW list
   override def removeAt(index: Int): RList[Nothing] = throw new NoSuchElementException
+
+  // the big 3
+  override def map[S](f: Nothing => S): RList[S] = this
+
+  override def flatMap[S](f: Nothing => RList[S]): RList[S] = this
+
+  override def filter(f: Nothing => Boolean): RList[Nothing] = this
 }
 
 case class ::[+T](override val head: T, override val tail: RList[T])
@@ -128,6 +140,37 @@ case class ::[+T](override val head: T, override val tail: RList[T])
     if (index < 0) this
     else removeAtTailRec(this, 0, RNil)
   }
+
+  // the big 3
+  override def map[S](f: T => S): RList[S] = {
+    @tailrec
+    def mapTailRec(remaining: RList[T], acc: RList[S]): RList[S] = {
+      if (remaining.isEmpty) acc.reverse
+      else mapTailRec(remaining.tail, f(remaining.head) :: acc)
+    }
+
+    mapTailRec(this, RNil)
+  }
+
+  override def flatMap[S](f: T => RList[S]): RList[S] = {
+    @tailrec
+    def flatMapTailRec(remaining: RList[T], acc: RList[S]): RList[S] = {
+      if (remaining.isEmpty) acc.reverse
+      else flatMapTailRec(remaining.tail, f(remaining.head) ++ acc)
+    }
+
+    flatMapTailRec(this, RNil)
+  }
+
+  override def filter(f: T => Boolean): RList[T] = {
+    @tailrec
+    def filterTailRec(remaining: RList[T], acc: RList[T]): RList[T] = {
+      if(remaining.isEmpty) acc.reverse
+      else filterTailRec(remaining.tail, if (f(remaining.head)) remaining.head :: acc else acc)
+    }
+
+    filterTailRec(this, RNil)
+  }
 }
 
 object RList {
@@ -166,4 +209,9 @@ object ListProblems extends App {
   // test removeAt
   println(aSmallList.removeAt(2))
   println(aLargeList.removeAt(13))
+
+  // test the big 3
+  println(aSmallList.map(x => x * 10))
+  println(aSmallList.filter(x => x % 2 != 0))
+
 }
