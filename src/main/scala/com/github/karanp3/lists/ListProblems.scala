@@ -33,6 +33,12 @@ sealed abstract class RList[+T] {
   def map[S](f: T => S): RList[S]
   def flatMap[S](f: T => RList[S]): RList[S]
   def filter(f: T => Boolean): RList[T]
+
+  /*
+  Medium problems
+   */
+  // run-length encoding
+  def rle: RList[(T, Int)]
 }
 
 case object RNil extends RList[Nothing] {
@@ -60,11 +66,17 @@ case object RNil extends RList[Nothing] {
   override def removeAt(index: Int): RList[Nothing] = throw new NoSuchElementException
 
   // the big 3
-  override def map[S](f: Nothing => S): RList[S] = this
+  override def map[S](f: Nothing => S): RList[S] = RNil
 
-  override def flatMap[S](f: Nothing => RList[S]): RList[S] = this
+  override def flatMap[S](f: Nothing => RList[S]): RList[S] = RNil
 
-  override def filter(f: Nothing => Boolean): RList[Nothing] = this
+  override def filter(f: Nothing => Boolean): RList[Nothing] = RNil
+
+  /**
+   * Medium problems
+   */
+  // run-length encoding
+  override def rle: RList[(Nothing, Int)] = RNil
 }
 
 case class ::[+T](override val head: T, override val tail: RList[T])
@@ -171,6 +183,21 @@ case class ::[+T](override val head: T, override val tail: RList[T])
 
     filterTailRec(this, RNil)
   }
+
+  /**
+   * Medium problems
+   */
+  // run-length encoding
+  override def rle: RList[(T, Int)] = {
+    @tailrec
+    def rleTailRec(remaining: RList[T], acc: RList[(T, Int)], curr: (T, Int)): RList[(T, Int)] = {
+      if (remaining.isEmpty) curr :: acc
+      else if (remaining.head != curr._1) rleTailRec(remaining.tail, curr :: acc, (remaining.head, 1))
+      else rleTailRec(remaining.tail, acc, (curr._1, curr._2 + 1))
+    }
+
+    rleTailRec(this.tail, RNil, (this.head, 1)).reverse
+  }
 }
 
 object RList {
@@ -190,28 +217,37 @@ object ListProblems extends App {
   val anotherSmallList = 4 :: 5 :: 6 :: RNil
   val aLargeList = RList.from(1 to 10000)
 
-  // test get k-th
-  println(aSmallList.apply(0))
-  println(aSmallList.apply(1))
-  println(aLargeList.apply(8735))
+  def testEasyFunctions(): Unit = {
+    // test get k-th
+    println(aSmallList.apply(0))
+    println(aSmallList.apply(1))
+    println(aLargeList.apply(8735))
 
-  // test length
-  println(aSmallList.length)
-  println(aLargeList.length)
+    // test length
+    println(aSmallList.length)
+    println(aLargeList.length)
 
-  // test reverse
-  println(aSmallList.reverse)
-  println(aLargeList.reverse)
+    // test reverse
+    println(aSmallList.reverse)
+    println(aLargeList.reverse)
 
-  // test concat
-  println(aSmallList ++ anotherSmallList)
+    // test concat
+    println(aSmallList ++ anotherSmallList)
 
-  // test removeAt
-  println(aSmallList.removeAt(2))
-  println(aLargeList.removeAt(13))
+    // test removeAt
+    println(aSmallList.removeAt(2))
+    println(aLargeList.removeAt(13))
 
-  // test the big 3
-  println(aSmallList.map(x => x * 10))
-  println(aSmallList.filter(x => x % 2 != 0))
+    // test the big 3
+    println(aSmallList.map(x => x * 10))
+    println(aSmallList.filter(x => x % 2 != 0))
+  }
 
+  def testMediumFunctions(): Unit = {
+    // test run-length encoding
+    println((1 :: 1 :: 1 :: 2 :: 3 :: 3 :: 4 :: 5 :: 5 :: 5 :: RNil).rle)
+    println((1 :: 1 :: 2 :: 3 :: 3 :: 3 :: 3 :: 4 :: 4 :: 4 :: 5 :: 6 :: RNil).rle)
+  }
+
+  testMediumFunctions()
 }
