@@ -39,6 +39,9 @@ sealed abstract class RList[+T] {
    */
   // run-length encoding
   def rle: RList[(T, Int)]
+
+  // duplicate each element a number of times in a row
+  def duplicateEach(k: Int): RList[T]
 }
 
 case object RNil extends RList[Nothing] {
@@ -77,6 +80,9 @@ case object RNil extends RList[Nothing] {
    */
   // run-length encoding
   override def rle: RList[(Nothing, Int)] = RNil
+
+  // duplicate each element
+  override def duplicateEach(k: Int): RList[Nothing] = RNil
 }
 
 case class ::[+T](override val head: T, override val tail: RList[T])
@@ -198,6 +204,18 @@ case class ::[+T](override val head: T, override val tail: RList[T])
 
     rleTailRec(this.tail, RNil, (this.head, 1)).reverse
   }
+
+  // duplicate each
+  override def duplicateEach(k: Int): RList[T] =  {
+    @tailrec
+    def duplicateEachTailRec(remaining: RList[T], acc: RList[T], count: Int): RList[T] = {
+      if (remaining.isEmpty) acc
+      else if (count < k) duplicateEachTailRec(remaining, remaining.head :: acc, count + 1)
+      else duplicateEachTailRec(remaining.tail, acc, 0)
+    }
+
+    duplicateEachTailRec(this, RNil, 0).reverse
+  }
 }
 
 object RList {
@@ -247,6 +265,9 @@ object ListProblems extends App {
     // test run-length encoding
     println((1 :: 1 :: 1 :: 2 :: 3 :: 3 :: 4 :: 5 :: 5 :: 5 :: RNil).rle)
     println((1 :: 1 :: 2 :: 3 :: 3 :: 3 :: 3 :: 4 :: 4 :: 4 :: 5 :: 6 :: RNil).rle)
+
+    // test duplicate each
+    println(aSmallList.duplicateEach(4))
   }
 
   testMediumFunctions()
