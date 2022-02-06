@@ -1,6 +1,7 @@
 package com.github.karanp3.lists
 
 import scala.annotation.tailrec
+import scala.util.Random
 
 sealed abstract class RList[+T] {
   /**
@@ -45,6 +46,9 @@ sealed abstract class RList[+T] {
 
   // rotate by a number of positions to the left
   def rotate(k: Int): RList[T]
+
+  // random sample
+  def sample(k: Int): RList[T]
 }
 
 case object RNil extends RList[Nothing] {
@@ -87,7 +91,11 @@ case object RNil extends RList[Nothing] {
   // duplicate each element
   override def duplicateEach(k: Int): RList[Nothing] = RNil
 
+  // rotate by a number of positions to the left
   override def rotate(k: Int): RList[Nothing] = RNil
+
+  // random sample
+  override def sample(k: Int): RList[Nothing] = RNil
 }
 
 case class ::[+T](override val head: T, override val tail: RList[T])
@@ -222,18 +230,33 @@ case class ::[+T](override val head: T, override val tail: RList[T])
     duplicateEachTailRec(this, RNil, 0).reverse
   }
 
+  // rotate list
   override def rotate(k: Int): RList[T] = {
     /*
     Complexity: O(max(N, K))
      */
     @tailrec
-    def rotateTailRec(remaining: RList[T], buffer: RList[T], count: Int): RList[T] = {
-      if (count == 0) remaining ++ buffer.reverse
-      else if (remaining.isEmpty) rotateTailRec(this, RNil, count)
-      else rotateTailRec(remaining.tail, remaining.head :: buffer, count - 1)
+    def rotateTailRec(remaining: RList[T], buffer: RList[T], nRemaining: Int): RList[T] = {
+      if (nRemaining == 0) remaining ++ buffer.reverse
+      else if (remaining.isEmpty) rotateTailRec(this, RNil, nRemaining)
+      else rotateTailRec(remaining.tail, remaining.head :: buffer, nRemaining - 1)
     }
 
     rotateTailRec(this, RNil, k)
+  }
+
+  // random sample
+  override def sample(k: Int): RList[T] = {
+    /*
+    Complexity: O(N * K)
+     */
+    @tailrec
+    def sampleTailRec(acc: RList[T], nRemaining: Int): RList[T] = {
+      if (nRemaining == 0) acc
+      else sampleTailRec(this(Random.nextInt(this.length)) :: acc, nRemaining - 1)
+    }
+
+    sampleTailRec(RNil, k)
   }
 }
 
@@ -293,6 +316,9 @@ object ListProblems extends App {
     for {
       i <- 1 to 20
     } println(oneToTen.rotate(i))
+
+    // test random sample
+    println(oneToTen.sample(50))
   }
 
   testMediumFunctions()
