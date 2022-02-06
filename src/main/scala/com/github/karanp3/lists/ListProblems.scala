@@ -42,6 +42,9 @@ sealed abstract class RList[+T] {
 
   // duplicate each element a number of times in a row
   def duplicateEach(k: Int): RList[T]
+
+  // rotate by a number of positions to the left
+  def rotate(k: Int): RList[T]
 }
 
 case object RNil extends RList[Nothing] {
@@ -83,6 +86,8 @@ case object RNil extends RList[Nothing] {
 
   // duplicate each element
   override def duplicateEach(k: Int): RList[Nothing] = RNil
+
+  override def rotate(k: Int): RList[Nothing] = RNil
 }
 
 case class ::[+T](override val head: T, override val tail: RList[T])
@@ -216,6 +221,20 @@ case class ::[+T](override val head: T, override val tail: RList[T])
 
     duplicateEachTailRec(this, RNil, 0).reverse
   }
+
+  override def rotate(k: Int): RList[T] = {
+    /*
+    Complexity: O(max(N, K))
+     */
+    @tailrec
+    def rotateTailRec(remaining: RList[T], buffer: RList[T], count: Int): RList[T] = {
+      if (count == 0) remaining ++ buffer.reverse
+      else if (remaining.isEmpty) rotateTailRec(this, RNil, count)
+      else rotateTailRec(remaining.tail, remaining.head :: buffer, count - 1)
+    }
+
+    rotateTailRec(this, RNil, k)
+  }
 }
 
 object RList {
@@ -234,6 +253,7 @@ object ListProblems extends App {
   val aSmallList = 1 :: 2 :: 3 :: RNil
   val anotherSmallList = 4 :: 5 :: 6 :: RNil
   val aLargeList = RList.from(1 to 10000)
+  val oneToTen = RList.from(1 to 10)
 
   def testEasyFunctions(): Unit = {
     // test get k-th
@@ -268,6 +288,11 @@ object ListProblems extends App {
 
     // test duplicate each
     println(aSmallList.duplicateEach(4))
+
+    // test rotate
+    for {
+      i <- 1 to 20
+    } println(oneToTen.rotate(i))
   }
 
   testMediumFunctions()
