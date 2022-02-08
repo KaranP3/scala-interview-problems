@@ -184,13 +184,35 @@ case class ::[+T](override val head: T, override val tail: RList[T])
   }
 
   override def flatMap[S](f: T => RList[S]): RList[S] = {
+    /*
+      Complexity: O(Z ^ 2)
+     */
     @tailrec
     def flatMapTailRec(remaining: RList[T], acc: RList[S]): RList[S] = {
       if (remaining.isEmpty) acc.reverse
       else flatMapTailRec(remaining.tail, f(remaining.head) ++ acc)
     }
 
-    flatMapTailRec(this, RNil)
+    /*
+      Complexity: O(N + Z)
+     */
+    @tailrec
+    def betterFlatMap(remaining: RList[T], acc: RList[RList[S]]): RList[S] = {
+      if (remaining.isEmpty) concatenateAll(acc, RNil, RNil)
+      else betterFlatMap(remaining.tail, f(remaining.head).reverse :: acc)
+    }
+
+    /*
+      Complexity: O(Z)
+     */
+    @tailrec
+    def concatenateAll(elements: RList[RList[S]], currentList: RList[S], acc: RList[S]): RList[S] = {
+      if (currentList.isEmpty && elements.isEmpty) acc
+      else if (currentList.isEmpty) concatenateAll(elements.tail, elements.head, acc)
+      else concatenateAll(elements, currentList.tail, currentList.head :: acc)
+    }
+
+    betterFlatMap(this, RNil)
   }
 
   override def filter(f: T => Boolean): RList[T] = {
@@ -319,6 +341,12 @@ object ListProblems extends App {
 
     // test random sample
     println(oneToTen.sample(50))
+
+    // test better flatMap
+    println(aSmallList.flatMap(x => x :: 2 * x :: RNil))
+    val time = System.currentTimeMillis()
+    aLargeList.flatMap(x => x :: 2 * x :: RNil)
+    println(System.currentTimeMillis() - time)
   }
 
   testMediumFunctions()
