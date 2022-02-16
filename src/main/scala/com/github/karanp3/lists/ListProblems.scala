@@ -35,7 +35,7 @@ sealed abstract class RList[+T] {
   def flatMap[S](f: T => RList[S]): RList[S]
   def filter(f: T => Boolean): RList[T]
 
-  /*
+  /**
   Medium problems
    */
   // run-length encoding
@@ -49,6 +49,12 @@ sealed abstract class RList[+T] {
 
   // random sample
   def sample(k: Int): RList[T]
+
+  /**
+   * Hard problems
+   */
+  // sorting the list in the order defined by the Ordering object
+  def sorted[S >: T](ordering: Ordering[S]): RList[S]
 }
 
 case object RNil extends RList[Nothing] {
@@ -96,6 +102,13 @@ case object RNil extends RList[Nothing] {
 
   // random sample
   override def sample(k: Int): RList[Nothing] = RNil
+
+  /**
+   * Hard problems
+   */
+
+  // sorting
+  override def sorted[S >: Nothing](ordering: Ordering[S]): RList[S] = RNil
 }
 
 case class ::[+T](override val head: T, override val tail: RList[T])
@@ -280,6 +293,46 @@ case class ::[+T](override val head: T, override val tail: RList[T])
 
     sampleTailRec(RNil, k)
   }
+
+  /**
+   * Hard problems
+   */
+  override def sorted[S >: T](ordering: Ordering[S]): RList[S] =  {
+    /*
+      insertSorted(4, [], [1, 2, 3, 5]) =
+      insertSorted(4, [1], [2, 3, 5]) =
+      insertSorted(4, [2, 1], [3, 5]) =
+      insertSorted(4, [3, 2, 1], [5]) =
+      [3, 2, 1].reverse ++ (4 :: [5]) =
+      [1, 2, 3, 4, 5]
+
+      Complexity: O(N)
+     */
+    @tailrec
+    def insertSorted(element: T, before: RList[S], after: RList[S]): RList[S] = {
+      if (after.isEmpty || ordering.lteq(element, after.head)) before.reverse ++ (element :: after)
+      else insertSorted(element, after.head :: before, after.tail)
+    }
+
+    /*
+      [3, 1, 4, 2, 5].sorted = insertSortTailRec([3, 1, 4, 2, 5], [])
+      = insertSortTailRec([1, 4, 2, 5], [3])
+      = insertSortTailRec([4, 2, 5], [1, 3])
+      = insertSortTailRec([2, 5], [1, 3, 4])
+      = insertSortTailRec([5], [1, 2, 3, 4])
+      = insertSortTailRec([], [1, 2, 3, 4, 5])
+      = [1, 2, 3, 4, 5]
+
+      Complexity: O(N^2)
+     */
+    @tailrec
+    def insertSortTailRec(remaining: RList[T], acc: RList[S]): RList[S] = {
+      if (remaining.isEmpty) acc
+      else insertSortTailRec(remaining.tail, insertSorted(remaining.head, RNil, acc))
+    }
+
+    insertSortTailRec(this, RNil)
+  }
 }
 
 object RList {
@@ -349,5 +402,14 @@ object ListProblems extends App {
     println(System.currentTimeMillis() - time)
   }
 
-  testMediumFunctions()
+  def testHardFunctions(): Unit = {
+    val anUnorderedList = 3 :: 1 :: 2 :: 4 :: 5 :: RNil
+    val ordering = Ordering.fromLessThan[Int](_ < _)
+
+    // insertion sort
+    println(anUnorderedList.sorted(ordering))
+    println(aLargeList.sample(10).sorted(ordering))
+  }
+
+  testHardFunctions()
 }
